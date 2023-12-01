@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 def fetch_data(limit=1000, offset=0):
     url = "https://data.cityofchicago.org/resource/85ca-t3if.json?" 
     
-    query = "$select=weather_condition,lighting_condition,street_name,crash_hour,crash_day_of_week&$where=crash_date>'2022-11-01T17:25:19' AND (caseless_ne(weather_condition, 'UNKNOWN') AND caseless_ne(lighting_condition, 'UNKNOWN'))&$order=crash_date DESC NULL FIRST,crash_record_id ASC NULL LAST"
+    query = "$select=weather_condition,lighting_condition,street_name,crash_hour,crash_day_of_week&$where=crash_date>'2021-11-01T17:25:19' AND (caseless_ne(weather_condition, 'UNKNOWN') AND caseless_ne(lighting_condition, 'UNKNOWN'))&$order=crash_date DESC NULL FIRST,crash_record_id ASC NULL LAST"
     url += "$limit=" + str(limit) + "&"
     url += "$offset=" + str(offset) + "&"
 
@@ -31,16 +31,14 @@ def fetch_data(limit=1000, offset=0):
 
 
 #VALUE TO CHOOSE HOW MANY DATA WE WANT, 100k available for the selectionned query.
-desired_data_size = 2000 
+desired_data_size = 20000
 
 
-dadadad= 0
 
 
 chunk_size = 50000  # Adjust as needed
 offset = 0
 all_data = []
-blyat=3
 # Fetch data in chunks until reaching the desired data size
 while offset < desired_data_size:
     # Calculate the remaining data size to fetch
@@ -106,7 +104,71 @@ print(X)
 X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.3, random_state=42)
 X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
 
-# Print the number of values in each subset
-print("Training Set - X:", X_train.shape[0], ", y:", y_train.shape[0])
-print("Validation Set - X:", X_val.shape[0], ", y:", y_val.shape[0])
-print("Test Set - X:", X_test.shape[0], ", y:", y_test.shape[0])
+
+# Filter out rows in X_val and y_val based on y_train labels
+X_val = X_val[y_val.isin(y_train)]
+y_val = y_val[y_val.isin(y_train)]
+
+# Filter out rows in X_test and y_test based on y_train labels
+X_test = X_test[y_test.isin(y_train)]
+y_test = y_test[y_test.isin(y_train)]
+
+
+import numpy as np
+
+# Assuming y_train is your encoded labels
+unique_labels = np.unique(y_train)
+
+# Get the number of unique labels
+num_unique_labels = len(unique_labels)
+
+print("Number of unique encoded labels:", num_unique_labels)
+
+
+weather_condition_counts = result_df['weather_condition'].value_counts()
+lighting_condition_counts = result_df['lighting_condition'].value_counts()
+street_name_counts = result_df['street_name'].value_counts()
+
+
+import tensorflow as tf
+from tensorflow.keras import layers,models
+from sklearn.preprocessing import LabelEncoder
+
+
+
+# Encode labels using LabelEncoder
+label_encoder = LabelEncoder()
+y_train_encoded = label_encoder.fit_transform(y_train)
+y_val_encoded = label_encoder.transform(y_val)
+y_test_encoded = label_encoder.transform(y_test)
+
+
+X_train = X_train.astype('float32')
+X_val = X_val.astype('float32')
+X_test = X_test.astype('float32')
+
+
+
+model = models.Sequential([
+    layers.Flatten(input_shape=(X_train.shape[1],)),  # Input layer (flatten the input)
+    layers.Dense(128, activation='relu'),        # Hidden layer with 128 neurons and ReLU activation
+    layers.Dropout(0.5),                         # Dropout layer to reduce overfitting
+    layers.Dense(64, activation='relu'),         # Another hidden layer with 64 neurons and ReLU activation
+    layers.Dense(len(label_encoder.classes_), activation='softmax')  # Output layer with softmax activation for classification
+])
+# Build the MLP model
+
+
+# Compile the model
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+
+# Train the model on the training set
+model.fit(X_train, y_train_encoded, epochs=100, batch_size=32, validation_data=(X_val, y_val_encoded))
+
+# Evaluate the model on the validation set
+val_loss, val_accuracy = model.evaluate(X_val, y_val_encoded)
+print(f"Validation Set Accuracy: {val_accuracy:.2%}")
+
+# Evaluate the model on the test set
+test_loss, test_accuracy = model.evaluate(X_test, y_test_encoded)
+print(f"Test Set Accuracy: {test_accuracy:.2%}")
