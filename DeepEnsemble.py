@@ -110,3 +110,42 @@ X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, r
 print("Training Set - X:", X_train.shape[0], ", y:", y_train.shape[0])
 print("Validation Set - X:", X_val.shape[0], ", y:", y_val.shape[0])
 print("Test Set - X:", X_test.shape[0], ", y:", y_test.shape[0])
+
+
+#----------------------------------------------------------------------------------------
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.optimizers import Adam
+from sklearn.model_selection import train_test_split
+
+# Generate some example data (replace this with your dataset loading)
+# X, y = load_your_data()
+
+# Split the data into training and testing sets
+#X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Define the model
+model = Sequential()
+
+# Input layer (adjust input_dim to match your feature dimensions)
+model.add(Dense(units=64, input_dim=X_train.shape[1], activation='relu'))
+
+# Hidden layer
+model.add(Dense(units=32, activation='relu'))
+
+# Output layer (adjust units to match the number of classes in your classification task)
+model.add(Dense(units=1, activation='sigmoid'))
+
+# Compile the model
+model.compile(optimizer=Adam(learning_rate=0.001), loss='binary_crossentropy', metrics=['accuracy'])
+
+# Display the model summary
+model.summary()
+
+# Train the model
+model.fit(X_train, y_train, epochs=10, batch_size=32, validation_data=(X_test, y_test))
+
+# Evaluate the model on the test set
+test_loss, test_accuracy = model.evaluate(X_test, y_test)
+print(f'Test Accuracy: {test_accuracy * 100:.2f}%')
