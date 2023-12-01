@@ -31,9 +31,10 @@ def fetch_data(limit=1000, offset=0):
 
 
 #VALUE TO CHOOSE HOW MANY DATA WE WANT, 100k available for the selectionned query.
-desired_data_size = 600 
+desired_data_size = 2000 
 
 
+dadadad= 0
 
 
 chunk_size = 50000  # Adjust as needed
@@ -83,7 +84,7 @@ lighting_mapping = {
     'DAYLIGHT': 0,
     'DUSK': 15,
     'DAWN': 15,
-    'DARKNESS, LIGHTED ROAD': 25,
+    'DARKNESS, LIGHTED ROAD': 30,   #We don't know which road islighted so we need to say it's the same
     'DARKNESS': 30
 }
 
@@ -94,11 +95,12 @@ result_df = result_df[result_df['lighting_condition'].notna()]
 
 # Apply the mapping and filter rows
 result_df['weather_condition'] = result_df['weather_condition'].map(weather_mapping)
-result_df = result_df[result_df['weather_condition'].notna()]
-
+result_df['weather_condition'] = result_df['weather_condition'].fillna(-1).astype(int)
 
 X = result_df.drop('street_name', axis=1)  # Features
 y = result_df['street_name']  # Labels
+
+print(X)
 
 # Split the data into training, validation, and test sets
 X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.3, random_state=42)
