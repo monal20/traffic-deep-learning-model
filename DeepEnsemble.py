@@ -31,7 +31,7 @@ def fetch_data(limit=1000, offset=0):
 
 
 #VALUE TO CHOOSE HOW MANY DATA WE WANT, 100k available for the selectionned query.
-desired_data_size = 2000 
+desired_data_size = 600 
 
 
 
