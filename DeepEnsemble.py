@@ -1,5 +1,6 @@
 import requests
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
 
 # Make the HTTP request
@@ -26,23 +27,29 @@ def fetch_data(limit=1000, offset=0):
     # Convert to Pandas DataFrame
 
 
-    
-
-# Unauthenticated client only works with public data sets. Note 'None'
-# in place of the application token, and no username or password:
+###### DATA SELECTION !!! It should be 52 weeks so we have equivalent crash day of the week
 
 
-# Define parameters
+#VALUE TO CHOOSE HOW MANY DATA WE WANT, 100k available for the selectionned query.
+desired_data_size = 600 
+
+
+
+
 chunk_size = 50000  # Adjust as needed
 offset = 0
 all_data = []
 
-# Fetch data in chunks until there is no more data
-for i in range(2):
-    data_chunk = fetch_data(limit=chunk_size, offset=offset)
+# Fetch data in chunks until reaching the desired data size
+while offset < desired_data_size:
+    # Calculate the remaining data size to fetch
+    remaining_data_size = desired_data_size - offset
+    # Use the minimum between chunk_size and remaining_data_size to avoid fetching more than desired
+    data_chunk = fetch_data(limit=min(chunk_size, remaining_data_size), offset=offset)
     
     # Break the loop if no more data
-    
+    if data_chunk.empty:
+        break
     
     all_data.append(data_chunk)
     offset += chunk_size
@@ -50,13 +57,14 @@ for i in range(2):
 # Concatenate all chunks into one DataFrame
 result_df = pd.concat(all_data, ignore_index=True)
 
+
 # Now result_df contains all the data
 
 
 
 #######################                  PREPROCESS         ##############################
 
-
+#######"" SOME PHENOMEON ARE CLOSE TO EACH OTHER SO WE HAVE TO MAKE THE MODEL UNDERSTAND IT. Close values with two phenomons ?
 
 
 weather_mapping = {
@@ -89,19 +97,14 @@ result_df['weather_condition'] = result_df['weather_condition'].map(weather_mapp
 result_df = result_df[result_df['weather_condition'].notna()]
 
 
-print(result_df)
+X = result_df.drop('street_name', axis=1)  # Features
+y = result_df['street_name']  # Labels
 
+# Split the data into training, validation, and test sets
+X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.3, random_state=42)
+X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
 
-"""
-weather_condition_counts = result_df['weather_condition'].value_counts()
-lighting_condition_counts = result_df['lighting_condition'].value_counts()
-street_name_counts = result_df['street_name'].value_counts()
-
-print("Weather Condition Counts:")
-print(weather_condition_counts)
-
-print("\nLighting Condition Counts:")
-print(lighting_condition_counts) 
-
-print("\nStreet name:")
-print(street_name_counts) """
+# Print the number of values in each subset
+print("Training Set - X:", X_train.shape[0], ", y:", y_train.shape[0])
+print("Validation Set - X:", X_val.shape[0], ", y:", y_val.shape[0])
+print("Test Set - X:", X_test.shape[0], ", y:", y_test.shape[0])
