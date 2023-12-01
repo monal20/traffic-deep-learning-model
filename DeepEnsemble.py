@@ -39,7 +39,7 @@ desired_data_size = 2000
 chunk_size = 50000  # Adjust as needed
 offset = 0
 all_data = []
-
+blyat=3
 # Fetch data in chunks until reaching the desired data size
 while offset < desired_data_size:
     # Calculate the remaining data size to fetch
