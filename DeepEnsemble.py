@@ -34,6 +34,7 @@ def fetch_data(limit=1000, offset=0):
 desired_data_size = 600 
 
 
+dadadad= 0
 
 
 chunk_size = 50000  # Adjust as needed
