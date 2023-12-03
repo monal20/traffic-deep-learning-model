@@ -1,5 +1,6 @@
 import requests
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 
 
@@ -31,7 +32,7 @@ def fetch_data(limit=1000, offset=0):
 
 
 #VALUE TO CHOOSE HOW MANY DATA WE WANT, 100k available for the selectionned query.
-desired_data_size = 20000
+desired_data_size = 50000
 
 
 
@@ -95,58 +96,53 @@ result_df = result_df[result_df['lighting_condition'].notna()]
 result_df['weather_condition'] = result_df['weather_condition'].map(weather_mapping)
 result_df['weather_condition'] = result_df['weather_condition'].fillna(-1).astype(int)
 
+result_df.drop(result_df[result_df['weather_condition'] == -1].index, inplace=True)
+
+
+#############################" NEGATIVE SAMPLING ###############"""""
+
+from sklearn.utils import shuffle
+
+
+new_df = pd.DataFrame(columns=result_df.columns)
+
+for column in new_df.columns:
+        new_df[column] = np.random.choice(result_df[column], size=int(len(result_df)*3.3))
+
+#Delete simmilar rows
+
+merge_columns = ['weather_condition', 'lighting_condition', 'street_name', 'crash_hour', 'crash_day_of_week']
+new_df = new_df.merge(result_df[merge_columns], on=merge_columns, how='left', indicator=True).query('_merge == "left_only"').drop('_merge', axis=1)
+
+
+
+result_df['is_crash'] = 1
+new_df['is_crash'] = 0
+
+# Assuming df1 and df2 are your two dataframes
+# Concatenate the two dataframes
+result_df = pd.concat([result_df, new_df], ignore_index=True)
+
+# Shuffle the concatenated dataframe
+result_df = shuffle(result_df, random_state=42)
+
+# Print the shuffled dataframe
+# Add a new column 'is_crash' to indicate if it's a real crash or not
+
+##################"" Splitting ########################""
+
+
+
+
 X = result_df.drop('street_name', axis=1)  # Features
 y = result_df['street_name']  # Labels
 
-print(X)
+
+
 
 # Split the data into training, validation, and test sets
 X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.3, random_state=42)
 X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
-
-# Print the number of values in each subset
-print("Training Set - X:", X_train.shape[0], ", y:", y_train.shape[0])
-print("Validation Set - X:", X_val.shape[0], ", y:", y_val.shape[0])
-print("Test Set - X:", X_test.shape[0], ", y:", y_test.shape[0])
-
-
-#----------------------------------------------------------------------------------------
-import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.optimizers import Adam
-from sklearn.model_selection import train_test_split
-
-# Generate some example data (replace this with your dataset loading)
-# X, y = load_your_data()
-
-# Split the data into training and testing sets
-#X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-# Define the model
-model = Sequential()
-
-# Input layer (adjust input_dim to match your feature dimensions)
-model.add(Dense(units=64, input_dim=X_train.shape[1], activation='relu'))
-
-# Hidden layer
-model.add(Dense(units=32, activation='relu'))
-
-# Output layer (adjust units to match the number of classes in your classification task)
-model.add(Dense(units=1, activation='sigmoid'))
-
-# Compile the model
-model.compile(optimizer=Adam(learning_rate=0.001), loss='binary_crossentropy', metrics=['accuracy'])
-
-# Display the model summary
-model.summary()
-
-# Train the model
-model.fit(X_train, y_train, epochs=10, batch_size=32, validation_data=(X_test, y_test))
-
-# Evaluate the model on the test set
-test_loss, test_accuracy = model.evaluate(X_test, y_test)
-print(f'Test Accuracy: {test_accuracy * 100:.2f}%')
 
 
 # Filter out rows in X_val and y_val based on y_train labels
@@ -157,21 +153,13 @@ y_val = y_val[y_val.isin(y_train)]
 X_test = X_test[y_test.isin(y_train)]
 y_test = y_test[y_test.isin(y_train)]
 
+fake_rows_mask = X_test['is_crash'] == 0  
 
-import numpy as np
-
-# Assuming y_train is your encoded labels
-unique_labels = np.unique(y_train)
-
-# Get the number of unique labels
-num_unique_labels = len(unique_labels)
-
-print("Number of unique encoded labels:", num_unique_labels)
+# Drop rows with fake crashes from X_test and y_test
+X_test = X_test[~fake_rows_mask]
+y_test = y_test[~fake_rows_mask]
 
 
-weather_condition_counts = result_df['weather_condition'].value_counts()
-lighting_condition_counts = result_df['lighting_condition'].value_counts()
-street_name_counts = result_df['street_name'].value_counts()
 
 
 import tensorflow as tf
@@ -202,12 +190,13 @@ model = models.Sequential([
 ])
 # Build the MLP model
 
-
+from tensorflow.keras.optimizers import Adam
 # Compile the model
-model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+optimizer = Adam(learning_rate=0.01)
+model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
 # Train the model on the training set
-model.fit(X_train, y_train_encoded, epochs=100, batch_size=32, validation_data=(X_val, y_val_encoded))
+model.fit(X_train, y_train_encoded, epochs=10, batch_size=32, validation_data=(X_val, y_val_encoded))
 
 # Evaluate the model on the validation set
 val_loss, val_accuracy = model.evaluate(X_val, y_val_encoded)
