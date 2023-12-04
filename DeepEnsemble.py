@@ -2,11 +2,15 @@ import requests
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-
+import tensorflow as tf
+from tensorflow.keras import layers,models
+from sklearn.preprocessing import LabelEncoder
+from tensorflow.keras.optimizers import Adam
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.preprocessing import StandardScaler
 
 # Make the HTTP request
-
-
 
 def fetch_data(limit=1000, offset=0):
     url = "https://data.cityofchicago.org/resource/85ca-t3if.json?" 
@@ -32,12 +36,12 @@ def fetch_data(limit=1000, offset=0):
 
 
 #VALUE TO CHOOSE HOW MANY DATA WE WANT, 100k available for the selectionned query.
-desired_data_size = 50000
+desired_data_size = 5000
 
 
 
 
-chunk_size = 50000  # Adjust as needed
+chunk_size = 5000 # Adjust as needed
 offset = 0
 all_data = []
 # Fetch data in chunks until reaching the desired data size
@@ -114,8 +118,6 @@ for column in new_df.columns:
 merge_columns = ['weather_condition', 'lighting_condition', 'street_name', 'crash_hour', 'crash_day_of_week']
 new_df = new_df.merge(result_df[merge_columns], on=merge_columns, how='left', indicator=True).query('_merge == "left_only"').drop('_merge', axis=1)
 
-
-
 result_df['is_crash'] = 1
 new_df['is_crash'] = 0
 
@@ -132,12 +134,8 @@ result_df = shuffle(result_df, random_state=42)
 ##################"" Splitting ########################""
 
 
-
-
 X = result_df.drop('street_name', axis=1)  # Features
 y = result_df['street_name']  # Labels
-
-
 
 
 # Split the data into training, validation, and test sets
@@ -160,14 +158,6 @@ X_test = X_test[~fake_rows_mask]
 y_test = y_test[~fake_rows_mask]
 
 
-
-
-import tensorflow as tf
-from tensorflow.keras import layers,models
-from sklearn.preprocessing import LabelEncoder
-
-
-
 # Encode labels using LabelEncoder
 label_encoder = LabelEncoder()
 y_train_encoded = label_encoder.fit_transform(y_train)
@@ -179,29 +169,66 @@ X_train = X_train.astype('float32')
 X_val = X_val.astype('float32')
 X_test = X_test.astype('float32')
 
+#################### Build the MLP model ############################
 
-
-model = models.Sequential([
+mlp_model = models.Sequential([
     layers.Flatten(input_shape=(X_train.shape[1],)),  # Input layer (flatten the input)
     layers.Dense(128, activation='relu'),        # Hidden layer with 128 neurons and ReLU activation
     layers.Dropout(0.5),                         # Dropout layer to reduce overfitting
     layers.Dense(64, activation='relu'),         # Another hidden layer with 64 neurons and ReLU activation
     layers.Dense(len(label_encoder.classes_), activation='softmax')  # Output layer with softmax activation for classification
 ])
-# Build the MLP model
 
-from tensorflow.keras.optimizers import Adam
+
 # Compile the model
 optimizer = Adam(learning_rate=0.01)
-model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+mlp_model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
 # Train the model on the training set
-model.fit(X_train, y_train_encoded, epochs=10, batch_size=32, validation_data=(X_val, y_val_encoded))
+mlp_model.fit(X_train, y_train_encoded, epochs=10, batch_size=32, validation_data=(X_val, y_val_encoded))
 
 # Evaluate the model on the validation set
-val_loss, val_accuracy = model.evaluate(X_val, y_val_encoded)
+val_loss, val_accuracy = mlp_model.evaluate(X_val, y_val_encoded)
 print(f"Validation Set Accuracy: {val_accuracy:.2%}")
 
 # Evaluate the model on the test set
-test_loss, test_accuracy = model.evaluate(X_test, y_test_encoded)
+test_loss, test_accuracy = mlp_model.evaluate(X_test, y_test_encoded)
 print(f"Test Set Accuracy: {test_accuracy:.2%}")
+
+################## Lasso Regression with L2 Regularization ###############
+
+#Penalty
+alpha_reg = 0.01
+print("hello")
+
+#Normalize
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_val_scaled = scaler.transform(X_val)
+X_test_scaled = scaler.transform(X_test)
+
+
+
+#Build the model
+lasso_reg = LogisticRegression(penalty='l2', C= alpha_reg, solver='saga')
+lasso_reg.fit(X_train_scaled, y_train_encoded)
+
+print("hello1")
+
+
+#Predictions
+lasso_y = lasso_reg.predict(X_test_scaled)
+lasso_val = lasso_reg.predict(X_val_scaled)
+
+print("hello2")
+
+
+# Validation Accuracy
+val_accuracy = accuracy_score(y_val_encoded, lasso_val)
+
+# Test Accuracy
+test_accuracy = accuracy_score(y_test_encoded, lasso_y)
+
+
+print(f'Validation Accuracy: {val_accuracy}')
+print(f'Test Accuracy: {val_accuracy}')
