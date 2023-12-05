@@ -78,3 +78,38 @@ current_time_chicago = datetime.now(chicago_timezone).strftime('%H:%M:%S')
 
 
 lighting_condition = get_current_lighting_condition(current_time_chicago)
+
+
+
+
+import folium
+from folium.plugins import MarkerCluster, HeatMap
+import webbrowser
+
+# Replace these with your actual highest and lowest values
+max_latitude = 42.0224207
+min_latitude = 41.644670132
+max_longitude = -87.524716597
+min_longitude = -87.914197073
+
+# Create a base map centered around the midpoint of the given range
+map_center = [(max_latitude + min_latitude) / 2, (max_longitude + min_longitude) / 2]
+m = folium.Map(location=map_center, zoom_start=12)
+
+# Generate some random data (replace this with your actual dataset)
+data = list(zip(result_df['latitude'].astype(float), result_df['longitude'].astype(float)))
+HeatMap(data).add_to(m)
+
+# Use MarkerCluster for point clustering
+marker_cluster = MarkerCluster().add_to(m)
+
+# Add individual markers to the cluster
+for index, row in result_df.iterrows():
+    folium.Marker([row['latitude'], row['longitude']]).add_to(marker_cluster)
+
+# Save the map to an HTML file
+html_file_path = "clustered_heatmap.html"
+m.save(html_file_path)
+
+# Open the HTML file in the default web browser
+webbrowser.open(html_file_path)

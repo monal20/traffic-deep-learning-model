@@ -1,14 +1,6 @@
-import requests
-import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
 import tensorflow as tf
-from tensorflow.keras import layers,models
-from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.optimizers import Adam
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, confusion_matrix
-from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import accuracy_score
 
 
@@ -23,30 +15,52 @@ from sklearn.metrics import accuracy_score
 
 
 # Function to get all the class probabilities from a model
+
 def get_probabilities(model, data):
     predictions = model.predict(data)
     return predictions
 
 
+def ensemble_model(X_train,y_train,X_val,y_val,X_test,y_test):
 # Train the models
-mlp_model.fit(X_train, y_train, epochs=10, batch_size=32, validation_data=(X_val, y_val))
-gbm_model.fit(X_train, y_train)
-model_3.fit(X_train, y_train)
+    from Models.mlp import mlp_model
 
-# Get class probabilities from each model
-probabilities_model_mlp = get_probabilities(mlp_model, X_test)
-probabilities_model_gbm = get_probabilities(gbm_model, X_test)
-probabilities_model_3 = get_probabilities(model_3, X_test)
+    mlp = mlp_model(X_train)
+    mlp.fit(X_train, y_train, epochs=10, batch_size=32, validation_data=(X_val, y_val))
 
-# Combine class probabilities from all models
-all_probabilities = [probabilities_model_mlp, probabilities_model_gbm, probabilities_model_3]
-average_probabilities = np.mean(all_probabilities, axis=0)
+    from Models.gbm import gbm_model
+
+    gbm = gbm_model(X_train,y_train)
+    gbm.fit(X_train, y_train)
 
 
-# Choose the class with the highest average probability 
-final_predictions = np.argmax(average_probabilities, axis=1)
+    from Models.lasso import lasso_regression_model
+    lasso = lasso_regression_model()
+    lasso.fit(X_train, y_train)
 
-# Evaluate the ensemble's accuracy
-accuracy = accuracy_score(y_test, final_predictions)
-print(f'Ensemble Accuracy: {accuracy}')
+    # Get class probabilities from each model
+    probabilities_model_mlp = get_probabilities(mlp, X_test)
+    probabilities_model_gbm = get_probabilities(gbm, X_test)
+    probabilities_model_lasso = get_probabilities(lasso, X_test)
 
+    # Combine class probabilities from all models
+    all_probabilities = [probabilities_model_mlp, probabilities_model_gbm, probabilities_model_lasso]
+    average_probabilities = np.mean(all_probabilities, axis=0)
+
+
+    # Choose the class with the highest average probability 
+    final_predictions = np.argmax(average_probabilities, axis=1)
+
+    # Evaluate the ensemble's accuracy
+    accuracy = accuracy_score(y_test, final_predictions)
+    print(f'Ensemble Accuracy: {accuracy}')
+
+
+def main(data_size):
+
+    from DeepEnsemble import run
+    X_train,y_train,X_val,y_val,X_test,y_test = run(data_size)
+    ensemble_model(X_train,y_train,X_val,y_val,X_test,y_test)
+
+
+main(2000)
