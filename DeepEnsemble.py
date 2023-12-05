@@ -15,7 +15,7 @@ from sklearn.preprocessing import StandardScaler
 def fetch_data(limit=1000, offset=0):
     url = "https://data.cityofchicago.org/resource/85ca-t3if.json?" 
     
-    query = "$select=weather_condition,lighting_condition,street_name,crash_hour,crash_day_of_week&$where=crash_date>'2021-11-01T17:25:19' AND (caseless_ne(weather_condition, 'UNKNOWN') AND caseless_ne(lighting_condition, 'UNKNOWN'))&$order=crash_date DESC NULL FIRST,crash_record_id ASC NULL LAST"
+    query = "$select=weather_condition,lighting_condition,latitude,longitude,street_name,crash_hour,crash_day_of_week&$where=crash_date>'2021-11-01T17:25:19' AND (caseless_ne(weather_condition, 'UNKNOWN') AND caseless_ne(lighting_condition, 'UNKNOWN'))&$order=crash_date DESC NULL FIRST,crash_record_id ASC NULL LAST"
     url += "$limit=" + str(limit) + "&"
     url += "$offset=" + str(offset) + "&"
 
@@ -36,7 +36,7 @@ def fetch_data(limit=1000, offset=0):
 
 
 #VALUE TO CHOOSE HOW MANY DATA WE WANT, 100k available for the selectionned query.
-desired_data_size = 5000
+desired_data_size = 1000
 
 
 
@@ -103,7 +103,61 @@ result_df['weather_condition'] = result_df['weather_condition'].fillna(-1).astyp
 result_df.drop(result_df[result_df['weather_condition'] == -1].index, inplace=True)
 
 
-#############################" NEGATIVE SAMPLING ###############"""""
+
+result_df = result_df.dropna(subset=['latitude'])
+result_df = result_df.dropna(subset=['longitude'])
+
+
+
+highest_value = result_df['latitude'].astype(float).max()
+lowest_value = result_df['latitude'].astype(float).min()
+
+print(f'Highest Value latitude: {highest_value}')
+print(f'Lowest Value latitude: {lowest_value}')
+
+highest_value = result_df['longitude'].astype(float).max()
+lowest_value = result_df['longitude'].astype(float).min()
+
+print(f'Highest Value longitude: {highest_value}')
+print(f'Lowest Value longitude: {lowest_value}')
+
+
+import folium
+from folium.plugins import MarkerCluster, HeatMap
+import webbrowser
+
+# Replace these with your actual highest and lowest values
+max_latitude = 42.0224207
+min_latitude = 41.644670132
+max_longitude = -87.524716597
+min_longitude = -87.914197073
+
+# Create a base map centered around the midpoint of the given range
+map_center = [(max_latitude + min_latitude) / 2, (max_longitude + min_longitude) / 2]
+m = folium.Map(location=map_center, zoom_start=12)
+
+# Generate some random data (replace this with your actual dataset)
+data = list(zip(result_df['latitude'].astype(float), result_df['longitude'].astype(float)))
+HeatMap(data).add_to(m)
+
+# Use MarkerCluster for point clustering
+marker_cluster = MarkerCluster().add_to(m)
+
+# Add individual markers to the cluster
+for index, row in result_df.iterrows():
+    folium.Marker([row['latitude'], row['longitude']]).add_to(marker_cluster)
+
+# Save the map to an HTML file
+html_file_path = "clustered_heatmap.html"
+m.save(html_file_path)
+
+# Open the HTML file in the default web browser
+webbrowser.open(html_file_path)
+
+
+"""
+
+#############################" NEGATIVE SAMPLING ###############
 
 from sklearn.utils import shuffle
 
@@ -169,20 +223,14 @@ X_train = X_train.astype('float32')
 X_val = X_val.astype('float32')
 X_test = X_test.astype('float32')
 
-#################### Build the MLP model ############################
-
-mlp_model = models.Sequential([
-    layers.Flatten(input_shape=(X_train.shape[1],)),  # Input layer (flatten the input)
-    layers.Dense(128, activation='relu'),        # Hidden layer with 128 neurons and ReLU activation
-    layers.Dropout(0.5),                         # Dropout layer to reduce overfitting
-    layers.Dense(64, activation='relu'),         # Another hidden layer with 64 neurons and ReLU activation
-    layers.Dense(len(label_encoder.classes_), activation='softmax')  # Output layer with softmax activation for classification
-])
 
 
-# Compile the model
-optimizer = Adam(learning_rate=0.01)
-mlp_model.compile(optimizer=optimizer, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+#################### MLP TRAINING ############################
+
+
+from Models.mlp import mlp_model
+
+mlp_model = mlp_model(X_train)
 
 # Train the model on the training set
 mlp_model.fit(X_train, y_train_encoded, epochs=10, batch_size=32, validation_data=(X_val, y_val_encoded))
@@ -194,6 +242,7 @@ print(f"Validation Set Accuracy: {val_accuracy:.2%}")
 # Evaluate the model on the test set
 test_loss, test_accuracy = mlp_model.evaluate(X_test, y_test_encoded)
 print(f"Test Set Accuracy: {test_accuracy:.2%}")
+
 
 ################## Lasso Regression with L2 Regularization ###############
 
@@ -232,3 +281,21 @@ test_accuracy = accuracy_score(y_test_encoded, lasso_y)
 
 print(f'Validation Accuracy: {val_accuracy}')
 print(f'Test Accuracy: {val_accuracy}')
+
+
+
+############# GBM ################"
+
+
+from Models.gbm import gbm
+
+gbm_model = gbm(X_train,y_train)
+
+predictions = model.predict_proba(X_test) #Print probabilities
+
+predictionss = model.predict(X_test) #Prints one street (the most risky one)
+
+print(predictions[:2]) #prints probabilities of first 2 tests
+print("Streets: ")
+print(predictionss[:2]) #Prints street name for firt 2 tests
+"""
