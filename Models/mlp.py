@@ -9,6 +9,7 @@ def mlp_model(X_train):
 
     # Input layer (adjust input_dim to match your feature dimensions)
     model.add(layers.Dense(units=64, input_dim=X_train.shape[1], activation='relu'))
+    model.add(layers.Dense(units=16, activation='relu'))
 
     # Hidden layer
     model.add(layers.Dense(units=32, activation='relu'))
@@ -17,6 +18,6 @@ def mlp_model(X_train):
     model.add(layers.Dense(units=1, activation='linear'))
 
     # Compile the model
-    model.compile(optimizer=Adam(learning_rate=0.001), loss='mean_squared_error', metrics=['mae'])
+    model.compile(optimizer=Adam(learning_rate=0.001, momentum=0.9), loss='mean_squared_error', metrics=['mae'])
 
     return model
