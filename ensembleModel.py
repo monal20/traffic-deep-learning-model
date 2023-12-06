@@ -44,7 +44,6 @@ def ensemble_model(X_train,y_train,X_val,y_val,X_test,y_test):
     probabilities_model_lasso = get_probabilities(lasso, X_test)
 
     # Combine class probabilities from all models
-    all_probabilities = [probabilities_model_mlp, probabilities_model_gbm, probabilities_model_lasso]
     """average_probabilities = np.mean(all_probabilities, axis=0)
 
 
@@ -52,7 +51,7 @@ def ensemble_model(X_train,y_train,X_val,y_val,X_test,y_test):
     final_predictions = np.argmax(average_probabilities, axis=1)
 
     # Evaluate the ensemble's accuracy"""
-    accuracy = accuracy_score(y_test, probabilities_model_mlp)
+    accuracy = (y_test, np.round(probabilities_model_mlp).astype(int))
     print(f'mlp Accuracy: {accuracy}')
 
     accuracy = accuracy_score(y_test, probabilities_model_gbm)
