@@ -15,9 +15,9 @@ def mlp_model(X_train):
     model.add(layers.Dense(units=32, activation='relu'))
 
     # Output layer with a single unit (for regression) and linear activation function
-    model.add(layers.Dense(units=1, activation='linear'))
+    model.add(layers.Dense(units=1, activation='softmax'))
 
     # Compile the model
-    model.compile(optimizer=Adam(learning_rate=0.001, momentum=0.9), loss='mean_squared_error', metrics=['mae'])
+    model.compile(optimizer=Adam(learning_rate=0.001, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'])
 
     return model
