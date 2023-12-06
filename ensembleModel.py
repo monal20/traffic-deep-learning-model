@@ -30,7 +30,7 @@ def ensemble_model(X_train,y_train,X_val,y_val,X_test,y_test):
 
     from Models.gbm import gbm_model
 
-    gbm = gbm_model(X_train,y_train)
+    gbm = gbm_model()
     gbm.fit(X_train, y_train)
 
 
@@ -45,15 +45,21 @@ def ensemble_model(X_train,y_train,X_val,y_val,X_test,y_test):
 
     # Combine class probabilities from all models
     all_probabilities = [probabilities_model_mlp, probabilities_model_gbm, probabilities_model_lasso]
-    average_probabilities = np.mean(all_probabilities, axis=0)
+    """average_probabilities = np.mean(all_probabilities, axis=0)
 
 
     # Choose the class with the highest average probability 
     final_predictions = np.argmax(average_probabilities, axis=1)
 
-    # Evaluate the ensemble's accuracy
-    accuracy = accuracy_score(y_test, final_predictions)
-    print(f'Ensemble Accuracy: {accuracy}')
+    # Evaluate the ensemble's accuracy"""
+    accuracy = accuracy_score(y_test, probabilities_model_mlp)
+    print(f'mlp Accuracy: {accuracy}')
+
+    accuracy = accuracy_score(y_test, probabilities_model_gbm)
+    print(f'gbm Accuracy: {accuracy}')
+
+    accuracy = accuracy_score(y_test, probabilities_model_lasso)
+    print(f'lasso Accuracy: {accuracy}')
 
 
 def main(data_size):

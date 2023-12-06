@@ -10,7 +10,7 @@ def gbm_model():
 
 # Initialize the CatBoost Classifier
     model = CatBoostClassifier(
-        iterations=1000, 
+        iterations=100, 
         learning_rate=0.1,
         depth=6,
         loss_function='MultiClass',

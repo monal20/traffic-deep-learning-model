@@ -13,11 +13,10 @@ def mlp_model(X_train):
     # Hidden layer
     model.add(layers.Dense(units=32, activation='relu'))
 
-    # Output layer (adjust units to match the number of classes in your classification task)
-    model.add(layers.Dense(units=1, activation='sigmoid'))
+    # Output layer with a single unit (for regression) and linear activation function
+    model.add(layers.Dense(units=1, activation='linear'))
 
     # Compile the model
-    model.compile(optimizer=Adam(learning_rate=0.001), loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer=Adam(learning_rate=0.001), loss='mean_squared_error', metrics=['mae'])
 
     return model
-    
