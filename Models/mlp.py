@@ -17,6 +17,6 @@ def mlp_model(X_train):
     model.add(layers.Dense(units=1, activation='linear'))
 
     # Compile the model
-    model.compile(optimizer=Adam(learning_rate=0.001), loss='mean_squared_error', metrics=['mae'])
+    model.compile(optimizer=Adam(learning_rate=0.01), loss='mean_squared_error', metrics=['mae'])
 
     return model

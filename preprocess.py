@@ -12,7 +12,7 @@ from tensorflow.keras.optimizers import Adam
 def fetch_data(limit=1000, offset=0):
     url = "https://data.cityofchicago.org/resource/85ca-t3if.json?" 
     
-    query = "$select=weather_condition,lighting_condition,latitude,longitude,:@computed_region_rpca_8um6,crash_hour,crash_day_of_week&$where=crash_date>'2021-11-01T17:25:19' AND caseless_ne(weather_condition, 'UNKNOWN') AND caseless_ne(lighting_condition, 'UNKNOWN') AND (`latitude` != 0) AND (`latitude` IS NOT NULL) AND (`longitude` != 0) AND (`longitude` IS NOT NULL)&$order=crash_date DESC NULL FIRST,crash_record_id ASC NULL LAST"
+    query = "$select=weather_condition,lighting_condition,:@computed_region_rpca_8um6,crash_hour,crash_day_of_week&$where=crash_date>'2021-11-01T17:25:19' AND caseless_ne(weather_condition, 'UNKNOWN') AND caseless_ne(lighting_condition, 'UNKNOWN') AND (`latitude` != 0) AND (`latitude` IS NOT NULL) AND (`longitude` != 0) AND (`longitude` IS NOT NULL)&$order=crash_date DESC NULL FIRST,crash_record_id ASC NULL LAST"
     url += "$limit=" + str(limit) + "&"
     url += "$offset=" + str(offset) + "&"
 
@@ -153,7 +153,7 @@ def splitting(result_df):
     X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.3, random_state=42)
 
     # Further split the temporary set into validation and test sets
-    X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=2/3, random_state=42)
+    X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
 
 
     # Filter out rows in X_val and y_val based on y_train labels
@@ -165,22 +165,16 @@ def splitting(result_df):
     y_test = y_test[y_test.isin(y_train)]
 
 
-
-
-
     # Encode labels using LabelEncoder
     label_encoder = LabelEncoder()
     y_train = label_encoder.fit_transform(y_train)
     y_val = label_encoder.transform(y_val)
     y_test = label_encoder.transform(y_test)
 
-    print(y_train)
 
-
-
-    X_train = X_train.astype('float32')
-    X_val = X_val.astype('float32')
-    X_test = X_test.astype('float32')
+    X_train = X_train.astype('int')
+    X_val = X_val.astype('int')
+    X_test = X_test.astype('int')
     return X_train,y_train,X_val,y_val,X_test,y_test
 
 
