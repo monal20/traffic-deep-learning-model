@@ -58,7 +58,7 @@ def ensemble_model(X_train,y_train,X_val,y_val,X_test,y_test):
 
 def main(data_size):
 
-    from DeepEnsemble import run
+    from preprocess import run
     X_train,y_train,X_val,y_val,X_test,y_test = run(data_size)
     ensemble_model(X_train,y_train,X_val,y_val,X_test,y_test)
 
