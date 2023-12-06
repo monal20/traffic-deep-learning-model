@@ -1,23 +1,17 @@
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras import layers,models
+from sklearn.neural_network import MLPClassifier
 
+def mlp_model():
+    # Create an MLPClassifier
+    mlp = MLPClassifier(
+        hidden_layer_sizes=(64, 32),  # Adjust the architecture as needed
+        activation='relu',
+        solver='adam',
+        alpha=0.0001,
+        batch_size='auto',
+        learning_rate='constant',
+        learning_rate_init=0.001,
+        max_iter=200,
+        random_state=42
+    )
 
-def mlp_model(X_train):
-
-# Define the model
-    model = models.Sequential()
-
-    # Input layer (adjust input_dim to match your feature dimensions)
-    model.add(layers.Dense(units=64, input_dim=X_train.shape[1], activation='relu'))
-    model.add(layers.Dense(units=16, activation='relu'))
-
-    # Hidden layer
-    model.add(layers.Dense(units=32, activation='relu'))
-
-    # Output layer with a single unit (for regression) and linear activation function
-    model.add(layers.Dense(units=1, activation='softmax'))
-
-    # Compile the model
-    model.compile(optimizer=Adam(learning_rate=0.001), loss='mean_squared_error', metrics=['mae'])
-
-    return model
+    return mlp

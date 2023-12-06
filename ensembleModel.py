@@ -3,6 +3,7 @@ import tensorflow as tf
 from tensorflow.keras.optimizers import Adam
 from sklearn.metrics import accuracy_score
 from sklearn.ensemble import VotingClassifier
+from sklearn.neural_network import MLPClassifier
 
 
 
@@ -27,75 +28,88 @@ def ensemble_model(X_train,y_train,X_val,y_val,X_test,y_test):
     from Models.mlp import mlp_model
 
 
-    
-    mlp = mlp_model(X_train)
-    #mlp.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_val, y_val))
+    mlp = mlp_model()
+   
 
     from Models.gbm import gbm_model
 
     gbm = gbm_model()
-    #gbm.fit(X_train, y_train)
+
+    
 
     from Models.lasso import lasso_regression_model
     lasso = lasso_regression_model()
-    #lasso.fit(X_train, y_train)
-
-    """
-    # Get class probabilities from each model
-    probabilities_model_mlp = get_probabilities(mlp, X_test)
-    probabilities_model_gbm = get_probabilities(gbm, X_test)
-    probabilities_model_lasso = get_probabilities(lasso, X_test)
-
-    # Combine class probabilities from all models
-    all_probabilities = [
-        np.round(probabilities_model_mlp).astype(int).reshape(-1),  # Reshape to 1D array
-        probabilities_model_gbm.flatten(),  # Flatten to 1D array
-        probabilities_model_lasso.flatten()  # Flatten to 1D array
-    ]    
-    average_probabilities = np.mean(all_probabilities, axis=0)
-    print(all_probabilities)
 
     
-    # Choose the class with the highest average probability 
-    final_predictions = np.argmax(average_probabilities)
-    print(final_predictions)
-    
-    accuracy = accuracy_score(y_test, final_predictions)
-    print(f'Ensemble Accuracy: {accuracy * 100:.2f}%')"""
-
-
-    voting_classifier = VotingClassifier(estimators=[('lr', gbm), ('svc', lasso), ('dt', gbm)], voting='soft')
+    voting_classifier = VotingClassifier(estimators=[('lr', mlp), ('svc', lasso), ('dt', gbm)], voting='soft')
 
     # Train the ensemble model
     voting_classifier.fit(X_train, y_train)
+    return voting_classifier
 
+
+def get_probabilities_with(voting_classifier,X_test,y_test):
     # Make predictions
-    predictions = voting_classifier.predict(X_test)
-
+    probabilities = voting_classifier.predict_proba(X_test)
     # Calculate accuracy
-    accuracy = accuracy_score(y_test, predictions)
-    print(f'Ensemble Accuracy: {accuracy * 100:.2f}%')
+    
 
-    # Evaluate the ensemble's accuracy
-    """
-    accuracy = accuracy_score(y_test, np.round(probabilities_model_mlp).astype(int))
-    print(f'mlp Accuracy: {accuracy * 100:.2f}%')
+    correct_top3_count = 0
 
-    accuracy = accuracy_score(y_test, probabilities_model_gbm)
-    print(f'gbm Accuracy: {accuracy * 100:.2f}%')
+    # Display the top 3 probabilities for each prediction and check if the true label is in the top 3
+    for i, (true_label, probs) in enumerate(zip(y_test, probabilities)):
+        top3_indices = np.argsort(probs)[-15:][::-1]  # Get indices of top 3 probabilities
+        top3_probs = probs[top3_indices]
+        
+        print(f"Instance {i + 1}: True Label: {true_label}")
+        
+        for j, (index, prob) in enumerate(zip(top3_indices, top3_probs), 1):
+            print(f"  Top {j}: Class {index}, Probability: {prob:.4f}")
+            
+            # Check if the true label is in the top 3
+            if index == true_label:
+                correct_top3_count += 1
+
+    # Calculate accuracy for the true label being in the top 3 on the test set
+    accuracy_top3 = correct_top3_count / len(y_test)
+    print(f'\nAccuracy for True Label in Top 5: {accuracy_top3 * 100:.2f}%')
 
 
-    accuracy = accuracy_score(y_test, probabilities_model_lasso)
-    print(f'lasso Accuracy: {accuracy * 100:.2f}%')"""
 
+def get_probabilities_without(model, X_test, top_k=3):
+    # Make predictions
+    probabilities = model.predict_proba(X_test)
 
+    # Display the top k probabilities for each prediction
+    for i, probs in enumerate(probabilities):
+        top_indices = np.argsort(probs)[-top_k:][::-1]  # Get indices of top k probabilities
+        top_probs = probs[top_indices]
+
+        print(f"Instance {i + 1}:")
+
+        for j, (index, prob) in enumerate(zip(top_indices, top_probs), 1):
+            print(f"  Top {j}: Class {index}, Probability: {prob:.4f}")
+            
+
+    
+    
+
+def testing(data_size,X_test):
+
+    from preprocess import run
+
+    X_train,y_train,X_val,y_val,X_test,y_test = run(data_size)
+    ensemble_model(X_train,y_train,X_val,y_val,X_test,y_test)
+
+    return 
     
 
 def main(data_size):
 
     from preprocess import run
     X_train,y_train,X_val,y_val,X_test,y_test = run(data_size)
-    ensemble_model(X_train,y_train,X_val,y_val,X_test,y_test)
+    model = ensemble_model(X_train,y_train,X_val,y_val,X_test,y_test)
+    get_probabilities_with(model,X_test,y_test)
 
 
 main(10000)

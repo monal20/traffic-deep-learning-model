@@ -72,11 +72,10 @@ def get_current_lighting_condition(time):
     else:
         return 'DARKNESS'
 
+
+current_weather = get_weather_in_chicago()
 chicago_timezone = pytz.timezone('America/Chicago')
 current_time_chicago = datetime.now(chicago_timezone).strftime('%H:%M:%S')
-
-
-
 lighting_condition = get_current_lighting_condition(current_time_chicago)
 
 
