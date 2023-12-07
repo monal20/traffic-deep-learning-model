@@ -70,8 +70,6 @@ def get_probabilities_with(voting_classifier,X_test,y_test):
                 correct_top3_count += 1
 
     # Calculate accuracy for the true label being in the top 3 on the test set
-    accuracy_top3 = correct_top3_count / len(y_test)
-    print(f'\nAccuracy for True Label in Top 5: {accuracy_top3 * 100:.2f}%')
 
 
 

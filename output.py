@@ -89,10 +89,6 @@ lighting_mapping = {
     'DARKNESS': 30
 }
 
-current_weather = get_weather_in_chicago()
-chicago_timezone = pytz.timezone('America/Chicago')
-current_time_chicago = datetime.now(chicago_timezone).strftime('%H:%M:%S')
-lighting_condition = get_current_lighting_condition(current_time_chicago)
 
 def get_parameters():
     current_weather = get_weather_in_chicago()
@@ -107,7 +103,6 @@ def get_parameters():
     weather = weather_mapping.get(current_weather)
     lighting = lighting_mapping.get(lighting_condition)
 
-    print(weather,lighting,current_hour,current_day_of_week)
     return weather,lighting,current_hour,current_day_of_week
 
 
@@ -129,15 +124,15 @@ data = create_single_row_dataframe(weather,lighting,current_hour,current_day_of_
 
 from ensembleModel import testing
 
-output = testing(2000,data)
+output = testing(20000,data)
 
 
 import folium
-from folium.plugins import MarkerCluster, HeatMap
+from folium.plugins import HeatMap
 import webbrowser
 from preprocess import create_dataframe
 
-result = create_dataframe(20000)
+result = create_dataframe(1000)
 
 from preprocess import preprocess
 import pickle
@@ -178,9 +173,9 @@ mymap = folium.Map(location=map_center, zoom_start=11)
 
 for index, row in output_df.iterrows():
     # Set color based on probability
-    if row['probability'] >= 0.05:
+    if row['probability'] >= 0.04:
         color = 'red'
-    elif row['probability'] >= 0.04:
+    elif row['probability'] >= 0.03:
         color = 'yellow'
     else:
         color = 'green'
@@ -199,9 +194,9 @@ for index, row in output_df.iterrows():
 legend_html = """
 <div style="position: fixed; bottom: 50px; left: 50px; width: 120px; height: 90px; 
             background-color: white; border:2px solid grey; z-index:9999; font-size:14px;">
-    <p style="margin: 5px; color: red;"> < 5% probability</p>
-    <p style="margin: 5px; color: yellow;"> < 4% probability</p>
-    <p style="margin: 5px; color: green;"> < 3% probability</p>
+    <p style="margin: 5px; color: red;"> < 4% probability</p>
+    <p style="margin: 5px; color: yellow;"> < 3% probability</p>
+    <p style="margin: 5px; color: green;">  > 3 % probability</p>
 </div>
 """
 

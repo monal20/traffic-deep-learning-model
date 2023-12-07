@@ -9,7 +9,7 @@ from sklearn.preprocessing import LabelEncoder
 def fetch_data(limit=1000, offset=0):
     url = "https://data.cityofchicago.org/resource/85ca-t3if.json?" 
     
-    query = "$select=weather_condition,longitude,latitude,lighting_condition,:@computed_region_rpca_8um6,crash_hour,crash_day_of_week&$where=crash_date>'2021-11-01T17:25:19' AND caseless_ne(weather_condition, 'UNKNOWN') AND caseless_ne(lighting_condition, 'UNKNOWN') AND (`latitude` != 0) AND (`latitude` IS NOT NULL) AND (`longitude` != 0) AND (`longitude` IS NOT NULL)&$order=crash_date DESC NULL FIRST,crash_record_id ASC NULL LAST"
+    query = "$select=weather_condition,longitude,latitude,lighting_condition,:@computed_region_rpca_8um6,crash_hour,crash_day_of_week&$where=crash_date>'2020-11-01T17:25:19' AND caseless_ne(weather_condition, 'UNKNOWN') AND caseless_ne(lighting_condition, 'UNKNOWN') AND (`latitude` != 0) AND (`latitude` IS NOT NULL) AND (`longitude` != 0) AND (`longitude` IS NOT NULL)&$order=crash_date DESC NULL FIRST,crash_record_id ASC NULL LAST"
     url += "$limit=" + str(limit) + "&"
     url += "$offset=" + str(offset) + "&"
 
@@ -26,10 +26,6 @@ def fetch_data(limit=1000, offset=0):
     # Convert to Pandas DataFrame
 
 
-###### DATA SELECTION !!! It should be 52 weeks so we have equivalent crash day of the week
-
-
-#VALUE TO CHOOSE HOW MANY DATA WE WANT, 100k available for the selectionned query.
 
 
 def create_dataframe(desired_data_size):
