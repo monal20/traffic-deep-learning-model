@@ -6,7 +6,7 @@ from sklearn.linear_model import LogisticRegression
 
 def lasso_regression_model():
     #Penalty
-    alpha_reg = 0.01
+    alpha_reg = 0.001
 
     #Build the model
     lasso_reg = LogisticRegression(penalty='l2', C= alpha_reg, solver='saga',verbose=1,max_iter=1000)
