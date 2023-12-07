@@ -9,7 +9,7 @@ from sklearn.preprocessing import LabelEncoder
 def fetch_data(limit=1000, offset=0):
     url = "https://data.cityofchicago.org/resource/85ca-t3if.json?" 
     
-    query = "$select=weather_condition,lighting_condition,:@computed_region_rpca_8um6,crash_hour,crash_day_of_week&$where=crash_date>'2021-11-01T17:25:19' AND caseless_ne(weather_condition, 'UNKNOWN') AND caseless_ne(lighting_condition, 'UNKNOWN') AND (`latitude` != 0) AND (`latitude` IS NOT NULL) AND (`longitude` != 0) AND (`longitude` IS NOT NULL)&$order=crash_date DESC NULL FIRST,crash_record_id ASC NULL LAST"
+    query = "$select=weather_condition,longitude,latitude,lighting_condition,:@computed_region_rpca_8um6,crash_hour,crash_day_of_week&$where=crash_date>'2021-11-01T17:25:19' AND caseless_ne(weather_condition, 'UNKNOWN') AND caseless_ne(lighting_condition, 'UNKNOWN') AND (`latitude` != 0) AND (`latitude` IS NOT NULL) AND (`longitude` != 0) AND (`longitude` IS NOT NULL)&$order=crash_date DESC NULL FIRST,crash_record_id ASC NULL LAST"
     url += "$limit=" + str(limit) + "&"
     url += "$offset=" + str(offset) + "&"
 
@@ -97,7 +97,6 @@ def preprocess(result_df):
     result_df['weather_condition'] = result_df['weather_condition'].fillna(-1).astype(int)
 
     result_df.drop(result_df[result_df['weather_condition'] == -1].index, inplace=True)
-
     result_df = result_df.rename(columns={':@computed_region_rpca_8um6': 'zip_code'})
 
     return result_df
@@ -141,6 +140,8 @@ def negative_sampling(result_df):
 
 
 def splitting(result_df):
+
+    result_df = result_df.drop(['longitude', 'latitude'], axis=1)
     X = result_df.drop('zip_code', axis=1)
 
     # Labels
@@ -164,10 +165,18 @@ def splitting(result_df):
 
     # Encode labels using LabelEncoder
     label_encoder = LabelEncoder()
+
+
+    
+
     y_train = label_encoder.fit_transform(y_train)
     y_val = label_encoder.transform(y_val)
     y_test = label_encoder.transform(y_test)
 
+    import pickle
+
+    with open('label_encoder.pkl', 'wb') as f:
+        pickle.dump(label_encoder, f)
 
     X_train = X_train.astype('int')
     X_val = X_val.astype('int')

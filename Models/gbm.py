@@ -11,8 +11,8 @@ def gbm_model():
 
 # Initialize the CatBoost Classifier
     model = CatBoostClassifier(
-        iterations=50, 
-        learning_rate=0.01,
+        iterations=20, 
+        learning_rate=0.05,
         depth=6,
         loss_function='MultiClass',
         cat_features= columns,

@@ -9,5 +9,5 @@ def lasso_regression_model():
     alpha_reg = 0.01
 
     #Build the model
-    lasso_reg = LogisticRegression(penalty='l2', C= alpha_reg, solver='saga',verbose=1,max_iter=500)
+    lasso_reg = LogisticRegression(penalty='l2', C= alpha_reg, solver='saga',verbose=1,max_iter=1000)
     return lasso_reg

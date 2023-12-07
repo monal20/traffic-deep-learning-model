@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+import pandas as pd
 from tensorflow.keras.optimizers import Adam
 from sklearn.metrics import accuracy_score
 from sklearn.ensemble import VotingClassifier
@@ -63,9 +64,7 @@ def get_probabilities_with(voting_classifier,X_test,y_test):
         
         print(f"Instance {i + 1}: True Label: {true_label}")
         
-        for j, (index, prob) in enumerate(zip(top3_indices, top3_probs), 1):
-            print(f"  Top {j}: Class {index}, Probability: {prob:.4f}")
-            
+        for j, (index, prob) in enumerate(zip(top3_indices, top3_probs), 1):            
             # Check if the true label is in the top 3
             if index == true_label:
                 correct_top3_count += 1
@@ -81,27 +80,29 @@ def get_probabilities_without(model, X_test, top_k=3):
     probabilities = model.predict_proba(X_test)
 
     # Display the top k probabilities for each prediction
-    for i, probs in enumerate(probabilities):
-        top_indices = np.argsort(probs)[-top_k:][::-1]  # Get indices of top k probabilities
-        top_probs = probs[top_indices]
+    top_indices = np.argsort(probabilities[0])[-top_k:][::-1]  # Get indices of top k probabilities
+    top_probs = probabilities[0][top_indices]
 
-        print(f"Instance {i + 1}:")
 
-        for j, (index, prob) in enumerate(zip(top_indices, top_probs), 1):
-            print(f"  Top {j}: Class {index}, Probability: {prob:.4f}")
+    array = []
+    for j, (index, prob) in enumerate(zip(top_indices, top_probs), 1):
+        print(f"  Top {j}: Class {index}, Probability: {prob:.4f}")
+        data = index,prob
+        array.append(data)
+
+    return array
             
-
-    
     
 
-def testing(data_size,X_test):
+def testing(data_size,test_to_compute):
 
     from preprocess import run
 
     X_train,y_train,X_val,y_val,X_test,y_test = run(data_size)
-    ensemble_model(X_train,y_train,X_val,y_val,X_test,y_test)
+    model = ensemble_model(X_train,y_train,X_val,y_val,X_test,y_test)
+    array = get_probabilities_without(model,test_to_compute, 10)
 
-    return 
+    return array
     
 
 def main(data_size):
@@ -111,5 +112,3 @@ def main(data_size):
     model = ensemble_model(X_train,y_train,X_val,y_val,X_test,y_test)
     get_probabilities_with(model,X_test,y_test)
 
-
-main(10000)
