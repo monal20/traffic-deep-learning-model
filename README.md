@@ -1,6 +1,6 @@
-# Team NPC - Traffic Deep Learning Model
+# Team NPC - Traffic car predictions
 
-Welcome to Team NPC's Traffic Deep Learning Model project! In this project, we aim to predict and analyze traffic incidents using deep learning techniques. Our model utilizes data from the Car Crashes in Chicago dataset, which you can find [here](link-to-dataset).
+Welcome to Team NPC's Traffic Deep Learning Model project! In this project, we aim to predict and analyze traffic incidents using deep learning techniques. Our model utilizes data from the Car Crashes in Chicago dataset, which you can find [here](https://data.cityofchicago.org/Transportation/Traffic-Crashes-Crashes/85ca-t3if/explore).
 
 ## Project Components
 
@@ -19,18 +19,18 @@ The `output.py` script handles the final steps of our model pipeline. It interfa
 
    ```bash
    git clone https://github.com/your-username/traffic-deep-learning-model.git
-   cd traffic-deep-learning-model```
+   cd traffic-deep-learning-model
    
 2. Install the required dependencies:
 
     ```bash
-   pip install -r requirements.txt```
+   pip install -r requirements.txt
 
 3. Get the current prediction in real-time as a map:
     ```bash
-    python output.py```
+    python output.py
 
 4. You can get the accuracy with 10k data and the top 3 predictions counted as good result:
 
     ```bash
-    python ensembleModel.py```
+    python ensembleModel.py
