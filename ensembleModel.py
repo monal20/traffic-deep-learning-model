@@ -49,28 +49,28 @@ def ensemble_model(X_train,y_train,X_val,y_val,X_test,y_test):
     return voting_classifier
 
 
-def get_probabilities_with(voting_classifier,X_test,y_test):
+def get_probabilities_with(voting_classifier, X_test, y_test, top_k=3):
     # Make predictions
     probabilities = voting_classifier.predict_proba(X_test)
-    # Calculate accuracy
-    
 
-    correct_top3_count = 0
+    correct_topk_count = 0
 
-    # Display the top 3 probabilities for each prediction and check if the true label is in the top 3
+    # Display the top k probabilities for each prediction and check if the true label is in the top k
     for i, (true_label, probs) in enumerate(zip(y_test, probabilities)):
-        top3_indices = np.argsort(probs)[-15:][::-1]  # Get indices of top 3 probabilities
-        top3_probs = probs[top3_indices]
-        
+        topk_indices = np.argsort(probs)[-top_k:][::-1]  # Get indices of top k probabilities
+        topk_probs = probs[topk_indices]
+
         print(f"Instance {i + 1}: True Label: {true_label}")
-        
-        for j, (index, prob) in enumerate(zip(top3_indices, top3_probs), 1):            
-            # Check if the true label is in the top 3
+
+        for j, (index, prob) in enumerate(zip(topk_indices, topk_probs), 1):
+            # Check if the true label is in the top k
             if index == true_label:
-                correct_top3_count += 1
+                correct_topk_count += 1
 
-    # Calculate accuracy for the true label being in the top 3 on the test set
-
+    # Calculate accuracy
+    accuracy = correct_topk_count / len(y_test)
+    
+    return accuracy
 
 
 def get_probabilities_without(model, X_test, top_k=3):
@@ -84,7 +84,7 @@ def get_probabilities_without(model, X_test, top_k=3):
 
     array = []
     for j, (index, prob) in enumerate(zip(top_indices, top_probs), 1):
-        print(f"  Top {j}: Class {index}, Probability: {prob:.4f}")
+        print(f"  Top {j}: Class encoded {index}, Probability: {prob:.4f}")
         data = index,prob
         array.append(data)
 

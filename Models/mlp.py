@@ -10,7 +10,7 @@ def mlp_model():
         batch_size='auto',
         learning_rate='constant',
         learning_rate_init=0.001,
-        max_iter=200,
+        max_iter=500,
         random_state=42,
         verbose= True
     )

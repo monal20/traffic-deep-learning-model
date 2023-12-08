@@ -170,8 +170,12 @@ def splitting(result_df):
     y_test = label_encoder.transform(y_test)
 
     import pickle
+    import os 
 
-    with open('label_encoder.pkl', 'wb') as f:
+    if not os.path.exists("ressources"):
+    # Create the folder if it doesn't exist
+        os.makedirs("ressources")
+    with open('ressources/label_encoder.pkl', 'wb') as f:
         pickle.dump(label_encoder, f)
 
     X_train = X_train.astype('int')

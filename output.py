@@ -118,94 +118,99 @@ def create_single_row_dataframe(weather_condition, lighting_condition, crash_hou
 
 # Example usage:
 
-weather,lighting,current_hour,current_day_of_week = get_parameters()
 
-data = create_single_row_dataframe(weather,lighting,current_hour,current_day_of_week)
+def running(size):
 
-from ensembleModel import testing
+    weather,lighting,current_hour,current_day_of_week = get_parameters()
 
-output = testing(20000,data)
+    data = create_single_row_dataframe(weather,lighting,current_hour,current_day_of_week)
 
+    from ensembleModel import testing
 
-import folium
-from folium.plugins import HeatMap
-import webbrowser
-from preprocess import create_dataframe
-
-result = create_dataframe(1000)
-
-from preprocess import preprocess
-import pickle
-
-result = preprocess(result)
-
-with open('label_encoder.pkl', 'rb') as f:
-        label_encoder = pickle.load(f)    
-
-output_df = pd.DataFrame(columns=['latitude', 'longitude', 'probability'])
-
-for i, j in output:
-    # Find the first row where 'zip_code' is equal to i
-    i = label_encoder.inverse_transform([i])
-    result['zip_code'].fillna(-1, inplace=True)  # Replace NaN with -1 or any other default value
-    result['zip_code'] = result['zip_code'].astype(int)
+    output = testing(size,data)
 
 
-    matching_rows = result[result['zip_code'] == int(i)]  
+    import folium
+    import webbrowser
+    from preprocess import create_dataframe
 
-    if not matching_rows.empty:
-        # Get the latitude and longitude values for the first row
-        latitude_value = matching_rows['latitude'].values[0]
-        longitude_value = matching_rows['longitude'].values[0]
+    result = create_dataframe(1000)
 
-        output_df = output_df.append({'latitude': latitude_value,
-                                      'longitude': longitude_value, 'probability': j}, ignore_index=True)
+    from preprocess import preprocess
+    import pickle
 
-        # Print or use the latitude and longitude values
-        print(f"For zip_code {i}, Latitude: {latitude_value}, Longitude: {longitude_value}")
-    else:
-        print(f"No rows found for zip_code {i}")
+    result = preprocess(result)
+
+    with open('ressources/label_encoder.pkl', 'rb') as f:
+            label_encoder = pickle.load(f)    
+
+    output_df = pd.DataFrame(columns=['latitude', 'longitude', 'probability'])
+
+    for i, j in output:
+        # Find the first row where 'zip_code' is equal to i
+        i = label_encoder.inverse_transform([i])
+        result['zip_code'].fillna(-1, inplace=True)  # Replace NaN with -1 or any other default value
+        result['zip_code'] = result['zip_code'].astype(int)
+
+
+        matching_rows = result[result['zip_code'] == int(i)]  
+
+        if not matching_rows.empty:
+            # Get the latitude and longitude values for the first row
+            latitude_value = matching_rows['latitude'].values[0]
+            longitude_value = matching_rows['longitude'].values[0]
+
+            output_df = output_df.append({'latitude': latitude_value,
+                                        'longitude': longitude_value, 'probability': j}, ignore_index=True)
+
+            # Print or use the latitude and longitude values
+        else:
+            print(f"No rows found for zip_code {i}")
 
 
 
-map_center = [output_df['latitude'].astype(float).mean(), output_df['longitude'].astype(float).mean()]
-mymap = folium.Map(location=map_center, zoom_start=11)
+    map_center = [output_df['latitude'].astype(float).mean(), output_df['longitude'].astype(float).mean()]
+    mymap = folium.Map(location=map_center, zoom_start=11)
 
-for index, row in output_df.iterrows():
-    # Set color based on probability
-    if row['probability'] >= 0.04:
-        color = 'red'
-    elif row['probability'] >= 0.03:
-        color = 'yellow'
-    else:
-        color = 'green'
+    for _, row in output_df.iterrows():
+        # Set color based on probability
+        if row['probability'] >= 0.04:
+            color = 'red'
+        elif row['probability'] >= 0.03:
+            color = 'yellow'
+        else:
+            color = 'green'
 
-    folium.CircleMarker(
-        location=[row['latitude'], row['longitude']],
-        radius= 25,  # Adjust the multiplier to control the circle size
-        color=color,
-        fill=True,
-        fill_color=color,
-        fill_opacity=0.6,
-        popup=f"Probability: {row['probability']*100:.2f}%"
-    ).add_to(mymap)
+        folium.Circle(
+            location=[row['latitude'], row['longitude']],
+            radius= 1500,  # Adjust the multiplier to control the circle size
+            color=color,
+            fill=True,
+            fill_color=color,
+            fill_opacity=0.6,
+            popup=f"Probability: {row['probability']*100:.2f}%"
+        ).add_to(mymap)
 
-# Add Legend
-legend_html = """
-<div style="position: fixed; bottom: 50px; left: 50px; width: 120px; height: 90px; 
-            background-color: white; border:2px solid grey; z-index:9999; font-size:14px;">
-    <p style="margin: 5px; color: red;"> < 4% probability</p>
-    <p style="margin: 5px; color: yellow;"> < 3% probability</p>
-    <p style="margin: 5px; color: green;">  > 3 % probability</p>
-</div>
-"""
+    # Add Legend
+    legend_html = """
+    <div style="position: fixed; bottom: 50px; left: 50px; width: 120px; height: 90px; 
+                background-color: white; border:2px solid grey; z-index:9999; font-size:14px;">
+        <p style="margin: 5px; color: red;"> < 4% probability</p>
+        <p style="margin: 5px; color: yellow;"> < 3% probability</p>
+        <p style="margin: 5px; color: green;">  > 3 % probability</p>
+    </div>
+    """
 
-mymap.get_root().html.add_child(folium.Element(legend_html))
+    mymap.get_root().html.add_child(folium.Element(legend_html))
 
-# Save the map or display it
-# Save the map to an HTML file
-html_file_path = 'hotspot_map.html'
-mymap.save(html_file_path)
+    # Save the map or display it
+    # Save the map to an HTML file
+    html_file_path = 'ressources/hotspot_map.html'
+    mymap.save(html_file_path)
 
-# Open the HTML file in the default web browser
-webbrowser.open(html_file_path)
+    # Open the HTML file in the default web browser
+    webbrowser.open(html_file_path)
+
+
+
+running(5000)
