@@ -69,6 +69,7 @@ def get_probabilities_with(voting_classifier, X_test, y_test, top_k=3):
 
     # Calculate accuracy
     accuracy = correct_topk_count / len(y_test)
+    print("Accuracy with the top ",top_k,": ",accuracy*100," %")
     
     return accuracy
 
@@ -108,5 +109,9 @@ def main(data_size):
     from preprocess import run
     X_train,y_train,X_val,y_val,X_test,y_test = run(data_size)
     model = ensemble_model(X_train,y_train,X_val,y_val,X_test,y_test)
-    get_probabilities_with(model,X_test,y_test)
+    get_probabilities_with(model,X_test,y_test,10)
 
+
+
+
+main(10000)
